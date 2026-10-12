@@ -1,0 +1,35 @@
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+bin/
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test output
+*.test
+coverage.out
+coverage.html
+
+# IDE & editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
