@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:18
+    networks:
+      - betago-network
+    environment:                       # dipakai Postgres untuk membuat user & database
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"              # port Windows : port di dalam container
+    volumes:
+      - postgres_data:/var/lib/postgresql   # simpan data supaya nggak hilang
+    healthcheck:                       # tanda "db sudah siap dipakai"
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 10
+  migrate:
+    image: migrate/migrate:v4.18.3
+    profiles: ["tools"]                # tidak ikut jalan saat "docker compose up"
+    volumes:
+      - ./database/migrations:/migrations   # folder migrations kamu
+      - ./database/seeders:/seeders         # folder seeders
+    depends_on:
+      db:
+        condition: service_healthy     # tunggu db siap
+    entrypoint:
+      - migrate
+      - -path=/migrations
+      - -database=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=${DB_SSLMODE}
+      - -verbose
+    command: ["up"]                    # default "up", bisa diganti saat run
+    networks:
+      - betago-network
+  seeder:
+    image: backend-betago-seeder:1.0
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.25-alpine
+        RUN go install github.com/jindalpeeyush/go-seeder/cmd/seeder@v1.0.2
+        ENV PATH="/go/bin:${PATH}"
+
+    profiles: ["tools"]
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=${DB_SSLMODE}"
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["seeder"]
+    command:
+      - "-path=database/seeders"
+      - "-database=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=${DB_SSLMODE}"
+      - "-verbose"
+      - "up"
+    networks:
+      - betago-network
+  app:
+    build: .                           # dibuat dari Dockerfile di folder ini
+    networks:
+      - betago-network
+    environment:
+      APP_ENV: ${APP_ENV}
+      DB_HOST: db                      # di dalam Docker, host = nama service (bukan 127.0.0.1)
+      DB_PORT: "5432"
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE}
+      JWT_SECRET: ${JWT_SECRET}
+      GIN_MODE: ${GIN_MODE}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  seeder_go_bin:
+
+networks:
+  betago-network:
+    external: true

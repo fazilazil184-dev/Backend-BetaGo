@@ -1,45 +1,22 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/fazilazil184-dev/Backend-BetaGo.git/config"
+	"github.com/fazilazil184-dev/Backend-BetaGo.git/routes"
+	"github.com/joho/godotenv"
+)
 
 func main() {
-
-	// for i := 1; i <= 100; i++ {
-	// 	fmt.Println("Hallo belajar golang : ", i)
-	// }
-
-	// i := 1
-	// for i <= 100 {
-	// 	fmt.Println("Hallo belajar golang : ", i)
-	// 	i++
-	// }
-
-	// title := "Golang Fazil"
-
-	// for _, letter := range title {
-	// 	fmt.Println("letter :", string(letter))
-	// }
-
-	// var bahasas [5]string
-	// bahasas[0] = "F"
-	// bahasas[1] = "A"
-	// bahasas[2] = "Z"
-	// bahasas[3] = "I"
-	// bahasas[4] = "L"
-
-	bahasas := [...]string{
-		"F",
-		"A",
-		"Z",
-		"I",
-		"L",
+	if err := godotenv.Load(); err != nil {
+		log.Println(err)
 	}
 
-	// fmt.Println(bahasas)
-	// length := len(bahasas)
-	// fmt.Println(length)
+	db := config.Connect()
 
-	for _, baha := range bahasas {
-		fmt.Println(baha)
-	}
+	r := routes.SetupRouter(db)
+
+	log.Fatal(r.Run(":8080"))
+
 }
