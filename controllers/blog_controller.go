@@ -174,9 +174,14 @@ func (bc *BlogController) UpdateBlog(ctx *gin.Context) {
 func (bc *BlogController) DetailBlog(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	var blog models.Blog
+	var blog struct {
+		ID      int64  `json:"id"`
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}
 
 	result := bc.DB.
+		Model(&models.Blog{}).
 		Select("id", "title", "slug", "content", "created_at").
 		First(&blog, id)
 
