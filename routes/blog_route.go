@@ -13,6 +13,10 @@ func RegisterBlogRoutes(v1 *gin.RouterGroup, db *gorm.DB) {
 	blogs := v1.Group("/blogs")
 	{
 		blogs.GET("", blogController.ListBlog)
-		blogs.GET("/list-v2", controllers.ListBlogV2)
+		blogs.GET("/list-v2", blogController.ListBlogV2)
+		blogs.POST("", blogController.CreateBlog)
+		blogs.PUT("/:id", blogController.UpdateBlog)
+		blogs.GET("/:id", blogController.DetailBlog)
+		blogs.DELETE("/:id", blogController.DeleteBlog)
 	}
 }
